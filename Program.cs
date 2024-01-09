@@ -16,13 +16,15 @@ class Program {
         string[] docxFiles = Directory.GetFiles(Environment.CurrentDirectory, "*.docx");
         string[] txtFiles = Directory.GetFiles(Environment.CurrentDirectory, "*.txt");
         if (!docxFiles.Any() || !txtFiles.Any()) return;
-        ReplaceKeysWithValues(docxFiles[0], txtFiles[0]);
+        string templatePath = docxFiles.FirstOrDefault(f => f.ToLower().Contains("template")) ?? docxFiles[0];
+        string keyValueFilePath = txtFiles.FirstOrDefault(f => f.ToLower().Contains("input")) ?? txtFiles[0];
+        ReplaceKeysWithValues(templatePath, keyValueFilePath);
     }
 
-    static void ReplaceKeysWithValues(string documentPath, string keyValueFilePath) {
+    static void ReplaceKeysWithValues(string templatePath, string keyValueFilePath) {
         Application wordApp = new Application();
-        Document doc = wordApp.Documents.Open(documentPath);
-
+        Document doc = wordApp.Documents.Open(templatePath);
+        
         Dictionary<string, string> keyValues = ReadKeyValues(keyValueFilePath);
 
         foreach (Range storyRange in doc.StoryRanges) {
@@ -35,7 +37,9 @@ class Program {
             }
         }
 
-        doc.SaveAs2(documentPath);
+        string resultFileName = Path.GetDirectoryName(templatePath) + "\\Result";
+        doc.SaveAs2(FileName: resultFileName, FileFormat: WdSaveFormat.wdFormatPDF);
+        doc.SaveAs2(FileName: resultFileName);
         doc.Close();
         wordApp.Quit(); 
     }
@@ -92,7 +96,7 @@ class Program {
     }
 
     private static string GetUahAmount(decimal totalMoney) {
-        return Decimal.ToInt32(totalMoney).ToString("N0", CultureInfo.CreateSpecificCulture("ru-RU"));
+        return decimal.ToInt32(totalMoney).ToString("N0", CultureInfo.CreateSpecificCulture("ru-RU"));
     }
 
     static decimal ParseMoney(string line) {
